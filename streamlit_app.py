@@ -5,7 +5,7 @@ import requests
 st.title('HELLO MOTHER FATHER') 
 
 # Add a welcome message 
-st.write('Welcome my CIKGU, CCTV & WIRING!') 
+st.write('Welcome my AKU,KITA,KAU,FIK NGN ALIFF') 
 
 # Create a text input 
 widgetuser_input = st.text_input('Enter a custom message:', 'Hello, Streamlit!') 
