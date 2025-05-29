@@ -2,16 +2,16 @@ import streamlit as st
 import requests
 
 # Set the app title 
-st.title('WELCOME TO MONEY CHANGER RATED') 
+st.title('HELLO MOTHER FATHER') 
 
 # Add a welcome message 
-st.write('Welcome my money changer rate') 
+st.write('Welcome my AKU,KITA,KAU,FIK NGN ALIFF') 
 
 # Create a text input 
 widgetuser_input = st.text_input('Enter a custom message:', 'Hello, Streamlit!') 
 
 # Display the customized message 
-st.write('Customized Message:', MOTHER)
+st.write('Customized Message:', widgetuser_input)
 
 # Pilihan mata wang
 currency_list = ['USD', 'MYR', 'EUR', 'GBP', 'SGD', 'JPY', 'THB', 'AUD']
