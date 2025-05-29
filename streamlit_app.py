@@ -2,10 +2,10 @@ import streamlit as st
 import requests
 
 # Set the app title 
-st.title('HELLO MOTHER FATHER') 
+st.title('WELCOME TO MONEY CHANGER RATED') 
 
 # Add a welcome message 
-st.write('Welcome my AKU,KITA,KAU,FIK NGN ALIFF') 
+st.write('Welcome my money changer rate') 
 
 # Create a text input 
 widgetuser_input = st.text_input('Enter a custom message:', 'Hello, Streamlit!') 
