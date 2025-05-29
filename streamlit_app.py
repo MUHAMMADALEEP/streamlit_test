@@ -21,11 +21,10 @@ to_currency = st.selectbox('Ke mata wang (TO):', currency_list)
 # Masukkan amaun
 amount = st.number_input('Masukkan amaun yang ingin ditukar:', min_value=0.0, value=100.0)
 
-# Panggil API untuk kadar tukaran
+# Panggil API kadar tukaran
 url = f'https://api.vatcomply.com/rates?base={from_currency}'
 response = requests.get(url)
 
-# Proses data
 if response.status_code == 200:
     data = response.json()
     rates = data['rates']
@@ -40,18 +39,68 @@ if response.status_code == 200:
 else:
     st.error(f"API gagal dengan kod status: {response.status_code}")
 
-# Saranan tempat pelancongan berdasarkan mata wang sasaran
-travel_suggestions = {
-    'USD': 'New York, USA 🇺🇸',
-    'MYR': 'Langkawi, Malaysia 🇲🇾',
-    'EUR': 'Paris, France 🇫🇷',
-    'GBP': 'London, UK 🇬🇧',
-    'SGD': 'Singapore 🇸🇬',
-    'JPY': 'Tokyo, Japan 🇯🇵',
-    'THB': 'PINGPONG, Thailand 🇹🇭',
-    'AUD': 'Sydney, Australia 🇦🇺'
+# Cadangan pelancongan + harga tiket
+travel_info = {
+    'USD': {
+        'dest': 'New York, USA 🇺🇸',
+        'flight': 3500,
+        'bus': None,
+        'ship': 1800
+    },
+    'MYR': {
+        'dest': 'Langkawi, Malaysia 🇲🇾',
+        'flight': 200,
+        'bus': 80,
+        'ship': 90
+    },
+    'EUR': {
+        'dest': 'Paris, France 🇫🇷',
+        'flight': 3200,
+        'bus': None,
+        'ship': None
+    },
+    'GBP': {
+        'dest': 'London, UK 🇬🇧',
+        'flight': 3300,
+        'bus': None,
+        'ship': None
+    },
+    'SGD': {
+        'dest': 'Singapore 🇸🇬',
+        'flight': 250,
+        'bus': 100,
+        'ship': None
+    },
+    'JPY': {
+        'dest': 'Tokyo, Japan 🇯🇵',
+        'flight': 2700,
+        'bus': None,
+        'ship': None
+    },
+    'THB': {
+        'dest': 'Bangkok, Thailand 🇹🇭',
+        'flight': 400,
+        'bus': 120,
+        'ship': None
+    },
+    'AUD': {
+        'dest': 'Sydney, Australia 🇦🇺',
+        'flight': 2900,
+        'bus': None,
+        'ship': 1700
+    }
 }
 
-if to_currency in travel_suggestions:
+# Papar maklumat pelancongan dan harga tiket
+if to_currency in travel_info:
+    info = travel_info[to_currency]
     st.subheader("Cadangan Destinasi Pelancongan 🎒✈️")
-    st.info(f"Jika anda tukar ke {to_currency}, anda boleh melancong ke: **{travel_suggestions[to_currency]}**")
+    st.info(f"Jika anda tukar ke {to_currency}, anda boleh melancong ke: **{info['dest']}**")
+
+    st.subheader("💸 Anggaran Harga Tiket Perjalanan dari Malaysia:")
+    if info['flight']:
+        st.write(f"✈️ **Kapal Terbang**: RM {info['flight']}")
+    if info['bus']:
+        st.write(f"🚌 **Bas**: RM {info['bus']}")
+    if info['ship']:
+        st.write(f"🚢 **Kapal**: RM {info['ship']}")
