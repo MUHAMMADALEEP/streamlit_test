@@ -15,7 +15,7 @@ st.write('Customized Message:', widgetuser_input)
 
 
 #API calls
-response = requests.get('https://api.open-meteo.com/v1/forecast?latitude=3.14&longitude=101.69&current_weather=true')
+response = requests.get('https://www.boredapi.com/api/activity')
 
 if response.status_code == 200:
     data = response.json()
