@@ -48,7 +48,7 @@ travel_suggestions = {
     'GBP': 'London, UK 🇬🇧',
     'SGD': 'Singapore 🇸🇬',
     'JPY': 'Tokyo, Japan 🇯🇵',
-    'THB': 'Bangkok, Thailand 🇹🇭',
+    'THB': 'PINGPONG, Thailand 🇹🇭',
     'AUD': 'Sydney, Australia 🇦🇺'
 }
 
