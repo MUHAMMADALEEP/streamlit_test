@@ -1,106 +1,77 @@
-import streamlit as st 
+import streamlit as st
 import requests
 
-# Set the app title 
-st.title('HELLO MOTHER FATHER') 
+# Configure the Streamlit page
+st.set_page_config(page_title="🍽 Recipe Finder", layout="centered")
 
-# Add a welcome message 
-st.write('Welcome my AKU,KITA,KAU,FIK NGN ALIFF') 
+# App title and subheading
+st.title("🍽 Recipe Finder")
+st.subheader("Find delicious meals using TheMealDB API")
 
-# Create a text input 
-widgetuser_input = st.text_input('Enter a custom message:', 'Hello, Streamlit!') 
-st.write('Customized Message:', widgetuser_input)
+# --- Search Options ---
+search_type = st.selectbox("Search by", ["Ingredient", "Meal Name", "Category"])
+query = st.text_input(f"Enter {search_type.lower()}")
 
-# Senarai mata wang
-currency_list = ['USD', 'MYR', 'EUR', 'GBP', 'SGD', 'JPY', 'THB', 'AUD']
+# --- Handle Search ---
+if st.button("Search") and query:
+    if search_type == "Ingredient":
+        url = f"https://www.themealdb.com/api/json/v1/1/filter.php?i={query}"
+    elif search_type == "Meal Name":
+        url = f"https://www.themealdb.com/api/json/v1/1/search.php?s={query}"
+    elif search_type == "Category":
+        url = f"https://www.themealdb.com/api/json/v1/1/filter.php?c={query}"
 
-# Pilihan mata wang FROM dan TO
-from_currency = st.selectbox('Dari mata wang (FROM):', currency_list)
-to_currency = st.selectbox('Ke mata wang (TO):', currency_list)
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
 
-# Masukkan amaun
-amount = st.number_input('Masukkan amaun yang ingin ditukar:', min_value=0.0, value=100.0)
+        if data["meals"] is None:
+            st.warning("No recipes found. Try something else!")
+        else:
+            for meal in data["meals"][:5]:  # Show up to 5 meals
+                st.markdown("---")
+                st.subheader(meal["strMeal"])
+                st.image(meal["strMealThumb"], use_column_width=True)
 
-# Panggil API kadar tukaran
-url = f'https://api.vatcomply.com/rates?base={from_currency}'
-response = requests.get(url)
+                # If user searched by Meal Name, full info already available
+                if search_type == "Meal Name":
+                    instructions = meal.get("strInstructions", "No instructions available.")
+                    youtube = meal.get("strYoutube", "")
+                    st.markdown("*Instructions:*")
+                    st.write(instructions)
 
-if response.status_code == 200:
-    data = response.json()
-    rates = data['rates']
+                    st.markdown("*Ingredients:*")
+                    for i in range(1, 21):
+                        ing = meal.get(f"strIngredient{i}")
+                        measure = meal.get(f"strMeasure{i}")
+                        if ing and ing.strip():
+                            st.write(f"- {ing} ({measure})")
 
-    if to_currency in rates:
-        rate = rates[to_currency]
-        converted_amount = amount * rate
+                    if youtube:
+                        st.markdown("*Watch on YouTube:*")
+                        st.video(youtube)
 
-        st.success(f"{amount} {from_currency} = {converted_amount:.2f} {to_currency}")
-    else:
-        st.warning(f"Kadar tukaran ke {to_currency} tidak tersedia.")
-else:
-    st.error(f"API gagal dengan kod status: {response.status_code}")
+                else:
+                    # For Ingredient or Category search, fetch full recipe details
+                    with st.expander("View full recipe"):
+                        meal_id = meal["idMeal"]
+                        detail_url = f"https://www.themealdb.com/api/json/v1/1/lookup.php?i={meal_id}"
+                        detail_response = requests.get(detail_url)
+                        full = detail_response.json()["meals"][0]
+                        st.write("**Instructions:**")
+                        st.write(full.get("strInstructions", "No instructions available."))
 
-# Cadangan pelancongan + harga tiket
-travel_info = {
-    'USD': {
-        'dest': 'New York, USA 🇺🇸',
-        'flight': 3500,
-        'bus': None,
-        'ship': 1800
-    },
-    'MYR': {
-        'dest': 'Langkawi, Malaysia 🇲🇾',
-        'flight': 200,
-        'bus': 80,
-        'ship': 90
-    },
-    'EUR': {
-        'dest': 'Paris, France 🇫🇷',
-        'flight': 3200,
-        'bus': None,
-        'ship': None
-    },
-    'GBP': {
-        'dest': 'London, UK 🇬🇧',
-        'flight': 3300,
-        'bus': None,
-        'ship': None
-    },
-    'SGD': {
-        'dest': 'Singapore 🇸🇬',
-        'flight': 250,
-        'bus': 100,
-        'ship': None
-    },
-    'JPY': {
-        'dest': 'Tokyo, Japan 🇯🇵',
-        'flight': 2700,
-        'bus': None,
-        'ship': None
-    },
-    'THB': {
-        'dest': 'Bangkok, Thailand 🇹🇭',
-        'flight': 400,
-        'bus': 120,
-        'ship': None
-    },
-    'AUD': {
-        'dest': 'Sydney, Australia 🇦🇺',
-        'flight': 2900,
-        'bus': None,
-        'ship': 1700
-    }
-}
+                        st.write("**Ingredients:**")
+                        for i in range(1, 21):
+                            ing = full.get(f"strIngredient{i}")
+                            measure = full.get(f"strMeasure{i}")
+                            if ing and ing.strip():
+                                st.write(f"- {ing} ({measure})")
 
-# Papar maklumat pelancongan dan harga tiket
-if to_currency in travel_info:
-    info = travel_info[to_currency]
-    st.subheader("Cadangan Destinasi Pelancongan 🎒✈️")
-    st.info(f"Jika anda tukar ke {to_currency}, anda boleh melancong ke: **{info['dest']}**")
+                        if full.get("strYoutube"):
+                            st.markdown("*Watch on YouTube:*")
+                            st.video(full["strYoutube"])
 
-    st.subheader("💸 Anggaran Harga Tiket Perjalanan dari Malaysia:")
-    if info['flight']:
-        st.write(f"✈️ **Kapal Terbang**: RM {info['flight']}")
-    if info['bus']:
-        st.write(f"🚌 **Bas**: RM {info['bus']}")
-    if info['ship']:
-        st.write(f"🚢 **Kapal**: RM {info['ship']}")
+    except requests.RequestException as e:
+        st.error(f"Failed to fetch data: {e}")
