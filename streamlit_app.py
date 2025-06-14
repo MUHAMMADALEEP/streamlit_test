@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import random
 
 # Configure the Streamlit page
 st.set_page_config(page_title="🍽 Recipe Finder", layout="centered")
@@ -12,9 +13,17 @@ st.subheader("Find delicious meals using TheMealDB API")
 search_type = st.selectbox("Search by", ["Ingredient", "Meal Name", "Category"])
 query = st.text_input(f"Enter {search_type.lower()}")
 
-# --- Initialize session state to store ratings and comments ---
-if "feedback" not in st.session_state:
-    st.session_state.feedback = {}
+# Sample comments for simulation
+sample_comments = [
+    "Absolutely delicious!",
+    "My kids loved it!",
+    "Easy to make and so tasty.",
+    "Perfect for a weekend meal.",
+    "Will definitely cook again!",
+    "A bit spicy for my taste, but still good.",
+    "Needed more seasoning.",
+    "Tasted just like a restaurant dish!"
+]
 
 # --- Handle Search ---
 if st.button("Search") and query:
@@ -38,19 +47,28 @@ if st.button("Search") and query:
                 st.subheader(meal["strMeal"])
                 st.image(meal["strMealThumb"], use_column_width=True)
 
-                # Get meal details if not full
+                # Get full meal detail
                 if search_type == "Meal Name":
                     full = meal
                 else:
-                    detail_url = f"https://www.themealdb.com/api/json/v1/1/lookup.php?i={meal['idMeal']}"
+                    meal_id = meal["idMeal"]
+                    detail_url = f"https://www.themealdb.com/api/json/v1/1/lookup.php?i={meal_id}"
                     detail_response = requests.get(detail_url)
                     full = detail_response.json()["meals"][0]
 
-                # Display Area (Cuisine type)
+                # --- Display Cuisine Type ---
                 cuisine = full.get("strArea", "Unknown")
-                st.markdown(f"**Cuisine Type:** {cuisine}")
+                st.markdown(f"**Cuisine Type:** `{cuisine}`")
 
-                # Instructions
+                # --- Simulate Rating & Comments ---
+                rating = random.randint(3, 5)  # random 3 to 5 stars
+                comments = random.sample(sample_comments, k=2)  # 2 random comments
+                st.markdown(f"**Community Rating:** {'⭐' * rating} ({rating}/5)")
+                st.markdown("**User Comments:**")
+                for c in comments:
+                    st.write(f"- _{c}_")
+
+                # --- Instructions & Ingredients ---
                 with st.expander("📖 View Instructions & Ingredients"):
                     st.markdown("**Instructions:**")
                     st.write(full.get("strInstructions", "No instructions available."))
@@ -62,28 +80,10 @@ if st.button("Search") and query:
                         if ing and ing.strip():
                             st.write(f"- {ing} ({measure})")
 
+                    # --- YouTube Video ---
                     if full.get("strYoutube"):
                         st.markdown("*🎥 Watch on YouTube:*")
                         st.video(full["strYoutube"])
-
-                # Feedback section
-                with st.expander("⭐ Rate & Comment this recipe"):
-                    key_prefix = meal["idMeal"]
-                    rating = st.slider(f"Rate this recipe (1-5 stars)", 1, 5, key=f"rate_{key_prefix}")
-                    comment = st.text_area("Leave a comment:", key=f"comment_{key_prefix}")
-                    if st.button("Submit Feedback", key=f"submit_{key_prefix}"):
-                        st.session_state.feedback[key_prefix] = {
-                            "rating": rating,
-                            "comment": comment
-                        }
-                        st.success("Feedback submitted!")
-
-                # Show feedback if already submitted
-                if meal["idMeal"] in st.session_state.feedback:
-                    feedback = st.session_state.feedback[meal["idMeal"]]
-                    st.markdown("### ✅ User Feedback")
-                    st.write(f"**Rating:** {'⭐' * feedback['rating']}")
-                    st.write(f"**Comment:** {feedback['comment']}")
 
     except requests.RequestException as e:
         st.error(f"Failed to fetch data: {e}")
