@@ -2,88 +2,66 @@ import streamlit as st
 import requests
 import random
 
-# Configure the Streamlit page
-st.set_page_config(page_title="🍽 Recipe Finder", layout="centered")
+# Configure Streamlit
+st.set_page_config(page_title="🍽 Recipe Finder with Reviews", layout="centered")
 
-# App title and subheading
-st.title("🍽 Recipe Finder")
-st.subheader("Find delicious meals using TheMealDB API")
+API_KEY = "YOUR_SPOONACULAR_API_KEY"  # Replace with your real key
 
-# --- Search Options ---
-search_type = st.selectbox("Search by", ["Ingredient", "Meal Name", "Category"])
-query = st.text_input(f"Enter {search_type.lower()}")
+st.title("🍽 Recipe Finder with Real Ratings")
+st.subheader("Search meals with actual community ratings")
 
-# Sample comments for simulation
-sample_comments = [
-    "Absolutely delicious!",
-    "My kids loved it!",
-    "Easy to make and so tasty.",
-    "Perfect for a weekend meal.",
-    "Will definitely cook again!",
-    "A bit spicy for my taste, but still good.",
-    "Needed more seasoning.",
-    "Tasted just like a restaurant dish!"
-]
+query = st.text_input("Search for a meal or ingredient")
 
-# --- Handle Search ---
 if st.button("Search") and query:
-    if search_type == "Ingredient":
-        url = f"https://www.themealdb.com/api/json/v1/1/filter.php?i={query}"
-    elif search_type == "Meal Name":
-        url = f"https://www.themealdb.com/api/json/v1/1/search.php?s={query}"
-    elif search_type == "Category":
-        url = f"https://www.themealdb.com/api/json/v1/1/filter.php?c={query}"
+    # Spoonacular search endpoint
+    url = f"https://api.spoonacular.com/recipes/complexSearch"
+    params = {
+        "query": query,
+        "number": 5,
+        "addRecipeInformation": True,
+        "apiKey": API_KEY
+    }
 
     try:
-        response = requests.get(url)
+        response = requests.get(url, params=params)
         response.raise_for_status()
         data = response.json()
 
-        if data["meals"] is None:
-            st.warning("No recipes found. Try something else!")
+        if not data.get("results"):
+            st.warning("No recipes found.")
         else:
-            for meal in data["meals"][:5]:  # Show up to 5 meals
+            for meal in data["results"]:
                 st.markdown("---")
-                st.subheader(meal["strMeal"])
-                st.image(meal["strMealThumb"], use_column_width=True)
+                st.subheader(meal["title"])
+                st.image(meal["image"], use_column_width=True)
 
-                # Get full meal detail
-                if search_type == "Meal Name":
-                    full = meal
-                else:
-                    meal_id = meal["idMeal"]
-                    detail_url = f"https://www.themealdb.com/api/json/v1/1/lookup.php?i={meal_id}"
-                    detail_response = requests.get(detail_url)
-                    full = detail_response.json()["meals"][0]
+                # --- Actual Rating ---
+                score = meal.get("spoonacularScore", 0)
+                health = meal.get("healthScore", 0)
+                st.markdown(f"**Community Score:** {'⭐' * round(score/20)} ({score}/100)")
+                st.markdown(f"**Health Score:** 🥗 {health}/100")
 
-                # --- Display Cuisine Type ---
-                cuisine = full.get("strArea", "Unknown")
-                st.markdown(f"**Cuisine Type:** `{cuisine}`")
+                # --- Summary ---
+                st.markdown("**Summary:**", unsafe_allow_html=True)
+                st.write(meal.get("summary", "No description.").replace("<b>", "").replace("</b>", ""))
 
-                # --- Simulate Rating & Comments ---
-                rating = random.randint(3, 5)  # random 3 to 5 stars
-                comments = random.sample(sample_comments, k=2)  # 2 random comments
-                st.markdown(f"**Community Rating:** {'⭐' * rating} ({rating}/5)")
-                st.markdown("**User Comments:**")
-                for c in comments:
-                    st.write(f"- _{c}_")
-
-                # --- Instructions & Ingredients ---
-                with st.expander("📖 View Instructions & Ingredients"):
+                # --- Instructions ---
+                if meal.get("analyzedInstructions"):
                     st.markdown("**Instructions:**")
-                    st.write(full.get("strInstructions", "No instructions available."))
+                    for step in meal["analyzedInstructions"][0]["steps"]:
+                        st.write(f"{step['number']}. {step['step']}")
+                else:
+                    st.write("No instructions available.")
 
-                    st.markdown("**Ingredients:**")
-                    for i in range(1, 21):
-                        ing = full.get(f"strIngredient{i}")
-                        measure = full.get(f"strMeasure{i}")
-                        if ing and ing.strip():
-                            st.write(f"- {ing} ({measure})")
-
-                    # --- YouTube Video ---
-                    if full.get("strYoutube"):
-                        st.markdown("*🎥 Watch on YouTube:*")
-                        st.video(full["strYoutube"])
+                # --- Ingredients ---
+                if meal.get("extendedIngredients"):
+                    with st.expander("🛒 Ingredients"):
+                        for ing in meal["extendedIngredients"]:
+                            st.write(f"- {ing['original']}")
+                
+                # --- YouTube Video (if available) ---
+                if meal.get("sourceUrl"):
+                    st.markdown(f"[🔗 Full Recipe Source]({meal['sourceUrl']})")
 
     except requests.RequestException as e:
-        st.error(f"Failed to fetch data: {e}")
+        st.error(f"Error: {e}")
