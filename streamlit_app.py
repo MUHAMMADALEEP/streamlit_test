@@ -10,17 +10,6 @@ st.subheader("Find delicious meals using TheMealDB API")
 search_type = st.selectbox("Search by", ["Ingredient", "Meal Name", "Category"])
 query = st.text_input(f"Enter {search_type.lower()}")
 
-sample_comments = [
-    "Absolutely delicious!",
-    "My kids loved it!",
-    "Easy to make and so tasty.",
-    "Perfect for a weekend meal.",
-    "Will definitely cook again!",
-    "A bit spicy for my taste, but still good.",
-    "Needed more seasoning.",
-    "Tasted just like a restaurant dish!"
-]
-
 if st.button("Search") and query:
     if search_type == "Ingredient":
         url = f"https://www.themealdb.com/api/json/v1/1/filter.php?i={query}"
@@ -54,11 +43,7 @@ if st.button("Search") and query:
                 st.markdown(f"*Cuisine Type:* {cuisine}")
 
                 rating = random.randint(3, 5)
-                comments = random.sample(sample_comments, k=2)
                 st.markdown(f"*Community Rating:* {'⭐' * rating} ({rating}/5)")
-                st.markdown("*User Comments:*")
-                for c in comments:
-                    st.write(f"- {c}")
 
                 with st.expander("📖 View Instructions & Ingredients"):
                     st.markdown("*Instructions:*")
